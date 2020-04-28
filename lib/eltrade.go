@@ -1,6 +1,13 @@
 package eltrade
 
-import "strings"
+import (
+	"bytes"
+	"fmt"
+	"github.com/jacobsa/go-serial/serial"
+	"github.com/juju/loggo"
+	"io"
+	"time"
+)
 
 /**
  Device MESSAGE SEQUENCE
@@ -51,67 +58,97 @@ import "strings"
 */
 type Command uint8
 
-const (
-	SOH                        = 0x1
-	AMB                        = 0x5
-	ETX                        = 0x3
-	BRK                        = 0x04
-	LEN_OFFSET                 = 0x24
-	MIN_SEQ                    = 0x20
-	MAX_SEQ                    = 0xFF
-	DEV_STATE          Command = 0xC1
-	NETWORK_STATE      Command = 0xC2
-	CITIZEN_INFO               = 0x2B
-	START_BILL                 = 0xC0
-	ADD_BILL_ITEM              = 0x31
-	GET_BILL_SUB_TOTAL         = 0x33
-	GET_BILL_TOTAL             = 0x35
-	END_BILL                   = 0x38
-)
-
-var (
-	charsToEscape = map[byte]string{
-		'\r': "^xa;",
-		'\n': "^xd;",
-		',':  "^x2c;",
-		'<':  "^lt;",
-		'>':  "^gt;",
-		'&':  "^amp;",
-	}
-	replacer = strings.NewReplacer("\r", "^xa;",
-		"\n", "^xd;",
-		",", "^x2c;",
-		"<", "^lt;",
-		">", "^gt;",
-		"&", "^amp;")
-)
-
-//, '\n', ',', '<', '>', '&'
 func (c Command) val() uint8 {
 	return uint8(c)
 }
 
-func bcc(data []byte, limit int) []byte {
-	sum := 0x00
-	bcc := make([]byte, 4)
+const (
+	SOH                         = 0x1
+	AMB                         = 0x5
+	ETX                         = 0x3
+	BRK                         = 0x04
+	LEN_OFFSET                  = 0x24
+	MIN_SEQ                     = 0x20
+	MAX_SEQ                     = 0xFF
+	DEV_STATE           Command = 0xC1
+	NETWORK_STATE       Command = 0xC2
+	TAXPAYER_INFO               = 0x2B
+	START_BILL                  = 0xC0
+	ADD_BILL_ITEM               = 0x31
+	GET_BILL_SUB_TOTAL          = 0x33
+	GET_BILL_TOTAL              = 0x35
+	END_BILL                    = 0x38
+	CMD_PROCESSING_TIME         = 100 * time.Millisecond
+)
 
-	for i, b := range data {
-		if i == 0 {
-			continue
-		}
-		if i == limit {
-			break
-		}
-		sum += int(b)
-	}
-	bcc[0] = byte(((sum & 0xf000) >> 12) + 0x30)
-	bcc[1] = byte(((sum & 0xf00) >> 8) + 0x30)
-	bcc[2] = byte(((sum & 0xf0) >> 4) + 0x30)
-	bcc[3] = byte(((sum & 0xf) >> 0) + 0x30)
-	//TODO : add loop instead of step by step ascii conversion
-	return bcc
+var (
+	logger = loggo.GetLogger("eltrade.driver")
+)
+
+type Device struct {
+	serial io.ReadWriteCloser
+	open   bool
 }
 
-func clear(str string) string {
-	return replacer.Replace(str)
+//016e20c1454430343030303632332c333230313931303736383832312c32303230303432383030333934322c322c302c302c302e30302c31382e30302c302e30302c31382e303004c080c080c0d8053132373403
+//016e20c1454430343030303632332c333230313931303736383832312c32303230303432383030333934322c322c302c302c302e30302c31382e30302c302e30302c31382e303004c080c080c0d8053132373403
+func Open() (*Device, error) {
+	logger.SetLogLevel(loggo.DEBUG)
+	dev := Device{}
+	var err error
+	options := serial.OpenOptions{
+		PortName:              "/dev/tty.usbmodem142101",
+		BaudRate:              115200, //https://github.com/ethno2405/eltrade-fiscal-device-protocol/blob/master/EltradeProtocol/EltradeProtocol/EltradeFiscalDeviceDriver.cs
+		DataBits:              8,      // MECeF_MCF_SFE_Protocole_v2.pdf : Page 5
+		StopBits:              1,
+		ParityMode:            serial.PARITY_NONE,
+		InterCharacterTimeout: 500,
+	}
+	dev.serial, err = serial.Open(options)
+	if err != nil {
+		logger.Errorf("fn:eltrade.Open -- %s", err.Error())
+		return nil, fmt.Errorf("serial.Open: %v", err)
+	}
+	dev.open = true
+	logger.Debugf("fn:eltrade.Open -- Success ")
+	return &dev, nil
+}
+
+func (dev *Device) Send(req *Request) Response {
+	if !dev.open {
+		return Response{status: NOT_READY}
+	}
+	dev.serial.Write(req.Build())
+	rawResponse := bytes.Buffer{}
+	r := Response{}
+	askResponseCount := 0
+	for {
+		// Slave -} Host. Slave notifies Host that the command will consume for execution time more than 100 ms.
+		// * The Slave have to send {SYN} on every 100ms while processing command and return response with packaged message
+		n, err := rawResponse.ReadFrom(dev.serial)
+		if err != nil {
+			logger.Errorf("fn:eltrade.Send -- %s", err.Error())
+			return Response{status: INVALID}
+		}
+		logger.Debugf("fn:eltrade.Send -- %s Bytes read ", n)
+
+		r.Parse(rawResponse.Bytes())
+		seq, err := r.GetSeq()
+		if err != nil {
+			logger.Errorf("fn:eltrade.Send -- %s", err.Error())
+			return Response{status: INVALID}
+		}
+		if seq != uint8(SYN) {
+			break
+		}
+		askResponseCount++
+		logger.Debugf("fn:eltrade.Send -- wait for response: %s time ", askResponseCount)
+		time.Sleep(CMD_PROCESSING_TIME)
+	}
+
+	return r
+}
+
+func (dev *Device) Close() {
+	dev.serial.Close()
 }

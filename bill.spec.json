@@ -1,0 +1,32 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Bill",
+  "description": "A Bill according to Benin Tax Sys",
+  "type": "object",
+  "properties": {
+
+    "kind": {
+      "type": "string",
+      "description": "FV = Facture de vente \nCV = Copie de la dernière Facture de vente \nEV = Facture de vente à l’exportation  \nEC= Copie de la dernière Facture de vente à l’exportation",
+      "enum": ["FV","CV","EV","EC"]
+    },
+
+    "isCopy": {
+      "description": "This bill is copy ?",
+      "default": false,
+      "type": "boolean"
+    },
+
+    "seller_id": {
+      "description": "Id of Seller",
+      "type": "string"
+    },
+
+    "seller_name": {
+      "type": "string",
+      "description": "Name of seller. Max 30 chars"
+    }
+  },
+
+  "required": ["isCopy", "seller_id", "seller_name"]
+}

@@ -2,6 +2,7 @@ package eltrade
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 )
 
@@ -28,7 +29,7 @@ func NewRequest(cmd Command) *Request {
 }
 
 func (r *Request) Body(data string) (*Request, error) {
-	bytes := []byte(data)
+	bytes := []byte(clear(data))
 	if len(bytes) > 200 {
 		return nil, errors.New("OutOfBound : Data should be less than 200 bytes")
 	}
@@ -56,5 +57,6 @@ func (r *Request) Build() []byte {
 	if r.Seq == MAX_SEQ {
 		r.Seq = MIN_SEQ
 	}
+	logger.Debugf("fn:request.Build -- %s", hex.EncodeToString(r.value.Bytes()))
 	return r.value.Bytes()
 }

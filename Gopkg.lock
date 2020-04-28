@@ -11,6 +11,52 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:e51f40f0c19b39c1825eadd07d5c0a98a2ad5942b166d9fc4f54750ce9a04810"
+  name = "github.com/juju/ansiterm"
+  packages = [
+    ".",
+    "tabwriter",
+  ]
+  pruneopts = "UT"
+  revision = "720a0952cc2ac777afc295d9861263e2a4cf96a1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:15dce89ef511b45a1ad0601a3c541b4f66d7d133b66130ba60eca94182feae8e"
+  name = "github.com/juju/loggo"
+  packages = [
+    ".",
+    "loggocolor",
+  ]
+  pruneopts = "UT"
+  revision = "6e530bcce5d8e1b51b8e5ee7f08a455cd0a8c2e5"
+
+[[projects]]
+  digest = "1:2dc8db55c5b223e6cd50aa7915e698cfcf56d1ddfa89bbbf65e24729e0a0200a"
+  name = "github.com/lunixbochs/vtclean"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "88cfb0c2efe8ed7b0ccf0af83db39359829027bb"
+  version = "v1.0.0"
+
+[[projects]]
+  digest = "1:0109cf4321a15313ec895f42e723e1f76121c6975ea006abfa20012272ec0937"
+  name = "github.com/mattn/go-colorable"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "68e95eba382c972aafde02ead2cd2426a8a92480"
+  version = "v0.1.6"
+
+[[projects]]
+  digest = "1:0c58d31abe2a2ccb429c559b6292e7df89dcda675456fecc282fa90aa08273eb"
+  name = "github.com/mattn/go-isatty"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "7b513a986450394f7bbf1476909911b3aa3a55ce"
+  version = "v0.0.12"
+
+[[projects]]
+  branch = "master"
   digest = "1:f88172369bcdae548777d8f2c59b11561f7e41686f426c583a7abaeec6978cc7"
   name = "golang.org/x/sys"
   packages = ["unix"]
@@ -20,6 +66,10 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  input-imports = ["github.com/jacobsa/go-serial/serial"]
+  input-imports = [
+    "github.com/jacobsa/go-serial/serial",
+    "github.com/juju/loggo",
+    "github.com/juju/loggo/loggocolor",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

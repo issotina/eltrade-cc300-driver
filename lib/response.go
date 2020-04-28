@@ -2,6 +2,7 @@ package eltrade
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 )
@@ -17,10 +18,11 @@ const (
 	// SYN is sentevery 100 ms, until the packed response message is ready
 	SYN Status = 0x16
 	// OK represent successful response
-	OK       Status = 0x01
-	INVALID  Status = 0x0
-	cmdIndex        = 4
-	seqIndex        = 3
+	OK        Status = 0x01
+	NOT_READY Status = -1
+	INVALID   Status = 0x0
+	cmdIndex         = 4
+	seqIndex         = 3
 )
 
 type Response struct {
@@ -33,10 +35,14 @@ type Response struct {
 }
 
 func (r *Response) Parse(rawBytes []byte) Status {
+	logger.Debugf("fn:Response.Parse -- Received bytes %s ", hex.EncodeToString(rawBytes))
+	rawBytes = clean(rawBytes)
+	logger.Debugf("fn:Response.Parse -- Cleared bytes %s ", hex.EncodeToString(rawBytes))
 	r.raw.Write(rawBytes)
 	r.readOnlyRaw.Write(rawBytes)
 	header, err := r.raw.ReadByte()
 	if err != nil {
+		logger.Errorf("fn:Response.Parse -- %s", err.Error())
 		return INVALID
 	}
 	r.status = Status(header)
@@ -48,7 +54,9 @@ func (r *Response) GetSeq() (uint8, error) {
 		return r.seq, nil
 	}
 	if r.status != OK || r.readOnlyRaw.Len() < seqIndex {
-		return 0, errors.New(fmt.Sprintf("Bad Response. Status : %s", r.status))
+		err := errors.New(fmt.Sprintf("Bad Response. Status : %s", hex.EncodeToString([]byte{byte(r.status)})))
+		logger.Errorf("fn:Response.GetSeq -- %s", err.Error())
+		return 0, err
 	}
 	r.seq = r.readOnlyRaw.Next(seqIndex)[seqIndex-1]
 	return r.seq, nil
@@ -59,7 +67,9 @@ func (r *Response) GetCmd() (uint8, error) {
 		return r.cmd, nil
 	}
 	if r.status != OK || r.readOnlyRaw.Len() < cmdIndex {
-		return 0, errors.New(fmt.Sprintf("Bad Response. Status : %s", r.status))
+		err := errors.New(fmt.Sprintf("Bad Response. Status : %s", r.status))
+		logger.Errorf("fn:Response.GetCmd -- %s", err.Error())
+		return 0, err
 	}
 	r.cmd = r.readOnlyRaw.Next(cmdIndex)[cmdIndex-1]
 	return r.seq, nil
@@ -69,7 +79,6 @@ func (r *Response) GetData() (string, error) {
 	if r.status != OK {
 		return "", errors.New(fmt.Sprintf("Bad Response. Status : %s", r.status))
 	}
-	// <01><LEN><SEQ><CMD><DATA><04><STATUS><05><BCC><03>
 	// shift LEN SEQ and CMD
 	r.raw.ReadByte()
 	r.raw.ReadByte()
@@ -81,18 +90,17 @@ func (r *Response) GetData() (string, error) {
 		data.Write([]byte{next})
 		next, _ = r.raw.ReadByte()
 	}
-
-	//	r.seq =
-	// shift LEN
-	/*
-		len := uint8( r.Bytes()[1] - byte(0x26))
-		println("len",len)
-		d := r.Bytes()[4:len - 7]
-		println("data",d )
-		bs, err := hex.DecodeString(hex.EncodeToString(d))
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(string(bs))*/
 	return string(data.Bytes()), nil
+}
+
+func clean(rawBytes []byte) []byte {
+	for ok := false; ok; ok = len(rawBytes) > 1 && rawBytes[len(rawBytes)-1] != ETX {
+		rawBytes = rawBytes[:len(rawBytes)-1]
+	}
+	println("---------", rawBytes[0], len(rawBytes), len(rawBytes) > 1 && rawBytes[0] != SOH)
+	for ok := len(rawBytes) > 1 && rawBytes[0] != SOH; ok; ok = len(rawBytes) > 1 && rawBytes[0] != SOH {
+		rawBytes = rawBytes[1:]
+		println("***********", hex.EncodeToString(rawBytes))
+	}
+	return rawBytes
 }
