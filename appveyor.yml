@@ -14,6 +14,7 @@ install:
   - choco source add -n=mh-cbon -s="https://api.bintray.com/nuget/mh-cbon/choco"
   - choco install changelog gh-api-cli -y
   - choco install go-msi -y
+  - choco install go-msi
   - refreshenv
   - set GH_APP=%APPVEYOR_PROJECT_NAME%
   - set GH_USER=%APPVEYOR_ACCOUNT_NAME%
