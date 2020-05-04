@@ -32,7 +32,7 @@ build_script:
   - mkdir bin\win\application
   - dep ensure
   - go build -o bin\win\application\eltrade.exe main.go
-  - cd bin\win && .\go-msi set-guid
+  - cd bin\win && .\go-msi.exe set-guid
   - .\go-msi.exe make --msi %GH_APP%-%GOARCH%-%VERSION%.msi --version %VERSION% --arch %GOARCH%
   - cp %GH_APP%-%GOARCH%-%VERSION%.msi %GH_APP%-%GOARCH%.msi
   # nuget package is built only for the x86 arch.
