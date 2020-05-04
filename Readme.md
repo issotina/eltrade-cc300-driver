@@ -73,7 +73,8 @@ NB: Cette requête prends 4s pour s'exécuter
 
 ##### 3 - [BILL] : Elle permet de créer une facture : 
  Pour créer une facture vous devez respecter le schéma json d'un de l'objet Bill (voir ```bill.spec.json```) 
- NB: https://www.jsonschemavalidator.net/
+ 
+ NB: Utilisez le fichier bill.spec.json avec un validateur comme https://www.jsonschemavalidator.net/ par example pour valider votre json
   
     Path: /bill
     Body: 
