@@ -22,7 +22,7 @@ install:
   - set PATH=%GOPATH%\bin;%PATH%
   - go get -u github.com/mh-cbon/never-fail
   - go get -u github.com/golang/dep/cmd/dep
-  - go get github.com/mh-cbon/go-msi
+  - go get -u github.com/mh-cbon/go-msi
 
 
 
