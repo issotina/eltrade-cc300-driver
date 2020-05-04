@@ -1,0 +1,13 @@
+#!/bin/bash
+
+APP_PATH=/Library/__PRODUCT__/__VERSION__
+if [ -d "$APP_PATH" ]
+then
+	ln -s $APP_PATH/eltrade ./eltrade-driver
+	chmod 755 eltrade-driver
+	chmod +x eltrade-driver
+	./eltrade-driver install 2>&1 >  /tmp/installation
+	echo "Post installation process finished" >> /tmp/installation
+else
+	echo "Post installation process failed $APP_PATH" >> /tmp/installation
+fi
