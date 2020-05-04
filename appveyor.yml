@@ -22,15 +22,10 @@ install:
   - set PATH=%GOPATH%\bin;%PATH%
   - go get -u github.com/mh-cbon/never-fail
 
-before_build:
-  # do a manual installation of go-msi from pulled source code
-  - mkdir C:\eltrade\
-  - set GOARCH=386
-  - GOOS=windows GOARCH=386 go build -o C:\eltrade\eltrade.exe  main.go
-  - cd bin\win && dir
 
 # build msi artifacts
 build_script:
+  - set GOOS=windows
   # x386
   - set GOARCH=386
   - mkdir bin\win\application
