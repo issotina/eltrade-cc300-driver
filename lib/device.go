@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/jacobsa/go-serial/serial"
 	"github.com/juju/loggo"
+	"go.bug.st/serial.v1/enumerator"
 	"io"
 	"time"
 )
@@ -79,25 +80,30 @@ const (
 	GET_BILL_TOTAL              = 0x35
 	END_BILL                    = 0x38
 	CMD_PROCESSING_TIME         = 100 * time.Millisecond
+	RESPONSE_DELIMITER          = 0x2c
+	EltradeVID                  = "03EB"
+	EltradePID                  = "6119"
 )
 
 var (
-	logger = loggo.GetLogger("eltrade.driver")
+	Logger = loggo.GetLogger("eltrade.driver")
 )
 
 type Device struct {
 	serial io.ReadWriteCloser
-	open   bool
+	IsOpen bool
 }
 
-//016e20c1454430343030303632332c333230313931303736383832312c32303230303432383030333934322c322c302c302c302e30302c31382e30302c302e30302c31382e303004c080c080c0d8053132373403
-//016e20c1454430343030303632332c333230313931303736383832312c32303230303432383030333934322c322c302c302c302e30302c31382e30302c302e30302c31382e303004c080c080c0d8053132373403
 func Open() (*Device, error) {
-	logger.SetLogLevel(loggo.DEBUG)
-	dev := Device{}
-	var err error
+	Logger.SetLogLevel(loggo.DEBUG)
+	dev := Device{IsOpen: false}
+	portName, err := getPortName()
+	if err != nil {
+		Logger.Errorf("fn:eltrade.Open -- %s", err.Error())
+		return nil, fmt.Errorf("serial.Open: %v", err)
+	}
 	options := serial.OpenOptions{
-		PortName:              "/dev/tty.usbmodem142101",
+		PortName:              portName,
 		BaudRate:              115200, //https://github.com/ethno2405/eltrade-fiscal-device-protocol/blob/master/EltradeProtocol/EltradeProtocol/EltradeFiscalDeviceDriver.cs
 		DataBits:              8,      // MECeF_MCF_SFE_Protocole_v2.pdf : Page 5
 		StopBits:              1,
@@ -106,16 +112,35 @@ func Open() (*Device, error) {
 	}
 	dev.serial, err = serial.Open(options)
 	if err != nil {
-		logger.Errorf("fn:eltrade.Open -- %s", err.Error())
+		Logger.Errorf("fn:eltrade.Open -- %s", err.Error())
 		return nil, fmt.Errorf("serial.Open: %v", err)
 	}
-	dev.open = true
-	logger.Debugf("fn:eltrade.Open -- Success ")
+	dev.IsOpen = true
+	Logger.Debugf("fn:eltrade.Open -- Success ")
+	var a []int
 	return &dev, nil
 }
 
+func getPortName() (string, error) {
+	ports, err := enumerator.GetDetailedPortsList()
+	if err != nil {
+		return "", err
+	}
+	if len(ports) == 0 {
+		return "", fmt.Errorf("No serial ports found!")
+	}
+	for _, port := range ports {
+		Logger.Debugf("Found port: Name: %s\n VendorID: %s\n ProductId: %s\n", port.Name, port.VID, port.PID)
+		if port.IsUSB && port.VID == EltradeVID && port.PID == EltradePID {
+			Logger.Infof("Matched port: %s\n", port.Name)
+			return port.Name, nil
+		}
+	}
+	return "", fmt.Errorf("No Eltrade devices found on serial ports !")
+}
+
 func (dev *Device) Send(req *Request) Response {
-	if !dev.open {
+	if !dev.IsOpen {
 		return Response{status: NOT_READY}
 	}
 	dev.serial.Write(req.Build())
@@ -127,28 +152,30 @@ func (dev *Device) Send(req *Request) Response {
 		// * The Slave have to send {SYN} on every 100ms while processing command and return response with packaged message
 		n, err := rawResponse.ReadFrom(dev.serial)
 		if err != nil {
-			logger.Errorf("fn:eltrade.Send -- %s", err.Error())
+			Logger.Errorf("fn:eltrade.Send -- %s", err.Error())
 			return Response{status: INVALID}
 		}
-		logger.Debugf("fn:eltrade.Send -- %s Bytes read ", n)
+		Logger.Debugf("fn:eltrade.Send -- %s Bytes read ", n)
 
 		r.Parse(rawResponse.Bytes())
 		seq, err := r.GetSeq()
 		if err != nil {
-			logger.Errorf("fn:eltrade.Send -- %s", err.Error())
+			Logger.Errorf("fn:eltrade.Send -- %s", err.Error())
 			return Response{status: INVALID}
 		}
 		if seq != uint8(SYN) {
 			break
 		}
 		askResponseCount++
-		logger.Debugf("fn:eltrade.Send -- wait for response: %s time ", askResponseCount)
-		time.Sleep(CMD_PROCESSING_TIME)
+		Logger.Debugf("fn:eltrade.Send -- wait for response: %s time ", askResponseCount)
+		//time.Sleep(CMD_PROCESSING_TIME)
 	}
 
 	return r
 }
 
 func (dev *Device) Close() {
-	dev.serial.Close()
+	if dev.IsOpen {
+		dev.serial.Close()
+	}
 }

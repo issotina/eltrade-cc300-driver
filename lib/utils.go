@@ -2,6 +2,7 @@ package eltrade
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strings"
 )
 
@@ -72,4 +73,19 @@ func bcc(data []byte, limit int) []byte {
 	bcc[3] = byte(((sum & 0xf) >> 0) + 0x30)
 	//TODO : add loop instead of step by step ascii conversion
 	return bcc
+}
+
+type EltradeString struct {
+	Val string
+}
+
+func (e *EltradeString) Append(str string) *EltradeString {
+	if strings.TrimSpace(str) != "" {
+		e.AppendWD(str, ",")
+	}
+	return e
+}
+func (e *EltradeString) AppendWD(str string, delimiter string) *EltradeString {
+	e.Val += fmt.Sprintf("%s%s", delimiter, strings.TrimSpace(str))
+	return e
 }

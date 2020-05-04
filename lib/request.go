@@ -10,7 +10,7 @@ type Request struct {
 	// Request format : <01><LEN><SEQ><CMD><DATA><05><BCC><03>
 
 	value bytes.Buffer
-	data  []byte
+	Data  []byte
 	cmd   Command
 	// Seq start from 20h to FFh
 	Seq uint8
@@ -34,7 +34,7 @@ func (r *Request) Body(data string) (*Request, error) {
 		return nil, errors.New("OutOfBound : Data should be less than 200 bytes")
 	}
 	//TODO: Control escape chars
-	r.data = bytes
+	r.Data = bytes
 	return r, nil
 }
 
@@ -47,9 +47,9 @@ func (r *Request) Build() []byte {
 	}
 	// Build request using the format
 	// Format : <01><LEN><SEQ><CMD><DATA><05><BCC><03>
-	payloadLength := LEN_OFFSET + uint8(len(r.data))
+	payloadLength := LEN_OFFSET + uint8(len(r.Data))
 	r.value.Write([]byte{payloadLength, r.Seq, r.cmd.val()})
-	r.value.Write(r.data)
+	r.value.Write(r.Data)
 	r.value.Write([]byte{AMB})
 	r.value.Write(bcc(r.value.Bytes(), int(payloadLength)))
 	r.value.Write([]byte{ETX})
@@ -57,6 +57,6 @@ func (r *Request) Build() []byte {
 	if r.Seq == MAX_SEQ {
 		r.Seq = MIN_SEQ
 	}
-	logger.Debugf("fn:request.Build -- %s", hex.EncodeToString(r.value.Bytes()))
+	Logger.Debugf("fn:request.Build -- %s", hex.EncodeToString(r.value.Bytes()))
 	return r.value.Bytes()
 }

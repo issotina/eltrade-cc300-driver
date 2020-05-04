@@ -35,14 +35,14 @@ type Response struct {
 }
 
 func (r *Response) Parse(rawBytes []byte) Status {
-	logger.Debugf("fn:Response.Parse -- Received bytes %s ", hex.EncodeToString(rawBytes))
+	Logger.Debugf("fn:Response.Parse -- Received bytes %s ", hex.EncodeToString(rawBytes))
 	rawBytes = clean(rawBytes)
-	logger.Debugf("fn:Response.Parse -- Cleared bytes %s ", hex.EncodeToString(rawBytes))
+	Logger.Debugf("fn:Response.Parse -- Cleared bytes %s ", hex.EncodeToString(rawBytes))
 	r.raw.Write(rawBytes)
 	r.readOnlyRaw.Write(rawBytes)
 	header, err := r.raw.ReadByte()
 	if err != nil {
-		logger.Errorf("fn:Response.Parse -- %s", err.Error())
+		Logger.Errorf("fn:Response.Parse -- %s", err.Error())
 		return INVALID
 	}
 	r.status = Status(header)
@@ -55,7 +55,7 @@ func (r *Response) GetSeq() (uint8, error) {
 	}
 	if r.status != OK || r.readOnlyRaw.Len() < seqIndex {
 		err := errors.New(fmt.Sprintf("Bad Response. Status : %s", hex.EncodeToString([]byte{byte(r.status)})))
-		logger.Errorf("fn:Response.GetSeq -- %s", err.Error())
+		Logger.Errorf("fn:Response.GetSeq -- %s", err.Error())
 		return 0, err
 	}
 	r.seq = r.readOnlyRaw.Next(seqIndex)[seqIndex-1]
@@ -68,7 +68,7 @@ func (r *Response) GetCmd() (uint8, error) {
 	}
 	if r.status != OK || r.readOnlyRaw.Len() < cmdIndex {
 		err := errors.New(fmt.Sprintf("Bad Response. Status : %s", r.status))
-		logger.Errorf("fn:Response.GetCmd -- %s", err.Error())
+		Logger.Errorf("fn:Response.GetCmd -- %s", err.Error())
 		return 0, err
 	}
 	r.cmd = r.readOnlyRaw.Next(cmdIndex)[cmdIndex-1]
@@ -97,10 +97,8 @@ func clean(rawBytes []byte) []byte {
 	for ok := false; ok; ok = len(rawBytes) > 1 && rawBytes[len(rawBytes)-1] != ETX {
 		rawBytes = rawBytes[:len(rawBytes)-1]
 	}
-	println("---------", rawBytes[0], len(rawBytes), len(rawBytes) > 1 && rawBytes[0] != SOH)
 	for ok := len(rawBytes) > 1 && rawBytes[0] != SOH; ok; ok = len(rawBytes) > 1 && rawBytes[0] != SOH {
 		rawBytes = rawBytes[1:]
-		println("***********", hex.EncodeToString(rawBytes))
 	}
 	return rawBytes
 }

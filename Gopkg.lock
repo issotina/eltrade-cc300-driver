@@ -2,6 +2,41 @@
 
 
 [[projects]]
+  digest = "1:0c2d59003b6f3053284ac89f6625c692728b92244fc932aaec4fccf48d48c3c5"
+  name = "github.com/creack/goselect"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "46bb8a62a5796b6dc262c1aded4fd9beee0aa571"
+  version = "v0.1.1"
+
+[[projects]]
+  digest = "1:440028f55cb322d8cb5b9d5ebec298a00b7d74690a658fe6b1c0c0b44341bfae"
+  name = "github.com/go-ole/go-ole"
+  packages = [
+    ".",
+    "oleutil",
+  ]
+  pruneopts = "UT"
+  revision = "97b6244175ae18ea6eef668034fd6565847501c9"
+  version = "v1.2.4"
+
+[[projects]]
+  digest = "1:3badd191155a742df107968fa7ae379cdb4f71c6cfb2929a8b780ce4f407b485"
+  name = "github.com/gobuffalo/here"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "eef370dfc10ce5b1d0c4513dcb14ecfb2135b83f"
+  version = "v0.6.2"
+
+[[projects]]
+  digest = "1:1a7059d684f8972987e4b6f0703083f207d63f63da0ea19610ef2e6bb73db059"
+  name = "github.com/imdario/mergo"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "66f88b4ae75f5edcc556623b96ff32c06360fbb7"
+  version = "v0.3.9"
+
+[[projects]]
   branch = "master"
   digest = "1:62737c77426b1784408f1908fb6aab50bdb1732396489a79b03c655643b0f4b2"
   name = "github.com/jacobsa/go-serial"
@@ -32,12 +67,33 @@
   revision = "6e530bcce5d8e1b51b8e5ee7f08a455cd0a8c2e5"
 
 [[projects]]
+  digest = "1:8f18653ebbb51d8223ce56f8834f62bb1cb11d59d3ba4f661cc8dc69a059ccc4"
+  name = "github.com/kardianos/service"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "56787a3ea05e9b262708192e7ce3b500aba73561"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:2dc8db55c5b223e6cd50aa7915e698cfcf56d1ddfa89bbbf65e24729e0a0200a"
   name = "github.com/lunixbochs/vtclean"
   packages = ["."]
   pruneopts = "UT"
   revision = "88cfb0c2efe8ed7b0ccf0af83db39359829027bb"
   version = "v1.0.0"
+
+[[projects]]
+  digest = "1:da7a1e62c4ca9ad22fcea1f8144b0ef8fad475fcadbe0f0d1a12488fd664ba3b"
+  name = "github.com/markbates/pkger"
+  packages = [
+    ".",
+    "internal/maps",
+    "pkging",
+    "pkging/stdos",
+  ]
+  pruneopts = "UT"
+  revision = "c028e66556ed2292d862981971a6095151f2c5cc"
+  version = "v0.15.1"
 
 [[projects]]
   digest = "1:0109cf4321a15313ec895f42e723e1f76121c6975ea006abfa20012272ec0937"
@@ -57,9 +113,52 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:f88172369bcdae548777d8f2c59b11561f7e41686f426c583a7abaeec6978cc7"
+  digest = "1:87fe9bca786484cef53d52adeec7d1c52bc2bfbee75734eddeb75fc5c7023871"
+  name = "github.com/xeipuuv/gojsonpointer"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "02993c407bfbf5f6dae44c4f4b1cf6a39b5fc5bb"
+
+[[projects]]
+  branch = "master"
+  digest = "1:dc6a6c28ca45d38cfce9f7cb61681ee38c5b99ec1425339bfc1e1a7ba769c807"
+  name = "github.com/xeipuuv/gojsonreference"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bd5ef7bd5415a7ac448318e64f11a24cd21e594b"
+
+[[projects]]
+  digest = "1:a8a0ed98532819a3b0dc5cf3264a14e30aba5284b793ba2850d6f381ada5f987"
+  name = "github.com/xeipuuv/gojsonschema"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "82fcdeb203eb6ab2a67d0a623d9c19e5e5a64927"
+  version = "v1.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:25ec9072b57f7ccd30f69f06c1cea15648eecacf7822617b98fd7454dfe98360"
+  name = "go.bug.st/serial.v1"
+  packages = [
+    ".",
+    "enumerator",
+    "unixutils",
+  ]
+  pruneopts = "UT"
+  revision = "24a6610f0541dca0b50686e8ceb37a7a9f06e6f3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:c0a43cd423081c92c7dc0f19f48304171d70aced031e3fc5a3cfda846be2a8b5"
   name = "golang.org/x/sys"
-  packages = ["unix"]
+  packages = [
+    "unix",
+    "windows",
+    "windows/registry",
+    "windows/svc",
+    "windows/svc/eventlog",
+    "windows/svc/mgr",
+  ]
   pruneopts = "UT"
   revision = "1957bb5e6d1f523308b49060df02171d06ddfc77"
 
@@ -67,9 +166,14 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/imdario/mergo",
     "github.com/jacobsa/go-serial/serial",
     "github.com/juju/loggo",
     "github.com/juju/loggo/loggocolor",
+    "github.com/kardianos/service",
+    "github.com/markbates/pkger",
+    "github.com/xeipuuv/gojsonschema",
+    "go.bug.st/serial.v1/enumerator",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -1,68 +1,72 @@
+//go:generate pkger
+
 package main
 
 import (
+	"context"
 	"fmt"
-	eltrade "github.com/geeckmc/eltrade-cc300-driver/lib"
+	"github.com/geeckmc/eltrade-cc300-driver/server"
 	"github.com/juju/loggo"
 	"github.com/juju/loggo/loggocolor"
+	"github.com/kardianos/service"
+	"log"
+	"net/http"
 	"os"
+	"time"
 )
+
+var logger service.Logger
+var httpServer *http.Server
+
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	go p.run()
+	return nil
+}
+func (p *program) run() {
+	httpServer = server.Serve()
+}
+func (p *program) Stop(s service.Service) error {
+	if httpServer != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		httpServer.Shutdown(ctx)
+	}
+	return nil
+}
 
 func main() {
 	loggo.ReplaceDefaultWriter(loggocolor.NewWriter(os.Stderr))
-
-	//v := hex.EncodeToString([]byte("	"))
-
-	//fmt.Printf("%s",v)
-	exec()
-
-}
-
-func exec() {
-	dev, err := eltrade.Open()
-	if err != nil {
-		panic(fmt.Sprintf("Failed to open dev: %s", err))
+	svcConfig := &service.Config{
+		Name:        "eltradeCC300Driver",
+		DisplayName: "Eltrade CC330 Drvier",
+		Description: "Driver for Eltrade Tax control device",
 	}
-	msg := eltrade.NewRequest(eltrade.DEV_STATE)
-	resp := dev.Send(msg)
 
-	sq, _ := resp.GetSeq()
-	println("seq: ", sq)
-	dt, _ := resp.GetData()
-	println("-----state \n", dt, "\n ----------------")
+	prg := &program{}
+	s, err := service.New(prg, svcConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger, err = s.SystemLogger(nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	msg = eltrade.NewRequest(eltrade.START_BILL)
-	msg.Body("2,Moudilou,3201910768821,0.00,18.00,0.00,18.00,FV,0201810241722,shadai,AIB1")
-	resp = dev.Send(msg)
-
-	sq, _ = resp.GetSeq()
-	println("seq: ", sq)
-	dt, _ = resp.GetData()
-	println("------init bill \n", dt, "\n ----------------")
-
-	msg = eltrade.NewRequest(eltrade.ADD_BILL_ITEM)
-	msg.Body("Piles plates\tA500*5")
-	resp = dev.Send(msg)
-
-	sq, _ = resp.GetSeq()
-	println("seq: ", sq)
-	dt, _ = resp.GetData()
-	println("-----add product \n", dt, "\n ----------------")
-
-	msg = eltrade.NewRequest(eltrade.GET_BILL_TOTAL)
-	msg.Body("M2525")
-	resp = dev.Send(msg)
-
-	sq, _ = resp.GetSeq()
-	println("seq: ", sq)
-	dt, _ = resp.GetData()
-	println("------total \n", dt, "\n ----------------")
-
-	msg = eltrade.NewRequest(eltrade.END_BILL)
-	resp = dev.Send(msg)
-
-	sq, _ = resp.GetSeq()
-	println("seq: ", sq)
-	dt, _ = resp.GetData()
-	println("------fin facture \n", dt, "\n ----------------")
+	args := os.Args
+	if len(args) > 1 {
+		switch args[1] {
+		case "install":
+			s.Install()
+			s.Start()
+			return
+		case "uninstall":
+			fmt.Printf("uninstall")
+			s.Stop()
+			s.Uninstall()
+			return
+		}
+	}
+	s.Run()
 }
