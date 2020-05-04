@@ -22,7 +22,7 @@ install:
   - set PATH=%GOPATH%\bin;%PATH%
   - go get -u github.com/mh-cbon/never-fail
 
-before_test:
+before_build:
   # do a manual installation of go-msi from pulled source code
   - mkdir C:\eltrade\
   - set GOARCH=386
