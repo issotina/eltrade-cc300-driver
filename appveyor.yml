@@ -1,0 +1,68 @@
+image: Visual Studio 2017
+clone_folder: c:\gopath\src\github.com\%APPVEYOR_ACCOUNT_NAME%\%APPVEYOR_PROJECT_SLUG%
+
+# skip_non_tags: true
+
+# environment variables
+environment:
+  GOPATH: c:\gopath
+  VCS_URL: https://github.com/%APPVEYOR_REPO_NAME%
+  GH_TOKEN:
+    secure: ngbsm9x1/3brsx+4LDkgEtic5icav3AGs/omGGjorQ07/WjURDjb6VbxahKU03QI
+
+install:
+  - choco source add -n=mh-cbon -s="https://api.bintray.com/nuget/mh-cbon/choco"
+  - choco install changelog gh-api-cli -y
+  - choco install go-msi -y
+  - refreshenv
+  - set GH_APP=%APPVEYOR_PROJECT_NAME%
+  - set GH_USER=%APPVEYOR_ACCOUNT_NAME%
+  - set VERSION=%APPVEYOR_REPO_TAG_NAME%
+  - set PATH=%WIX%\bin;%PATH%
+  - set PATH=%GOPATH%\bin;%PATH%
+  - go get -u github.com/mh-cbon/never-fail
+
+before_test:
+  # do a manual installation of go-msi from pulled source code
+  - mkdir C:\eltrade\
+  - set GOARCH=386
+  - GOOS=windows GOARCH=386 go build -o C:\eltrade\eltrade.exe  main.go
+  - cd bin\win && dir
+
+# build msi artifacts
+build_script:
+  # x386
+  - set GOARCH=386
+  - mkdir bin\win\application
+  - go build -o bin\win\application\eltrade.exe main.go
+  - cd bin\win && go-msi set-guid
+  - .\go-msi.exe make --msi %GH_APP%-%GOARCH%-%VERSION%.msi --version %VERSION% --arch %GOARCH%
+  - cp %GH_APP%-%GOARCH%-%VERSION%.msi %GH_APP%-%GOARCH%.msi
+  # nuget package is built only for the x86 arch.
+  # amd64
+  - set GOARCH=amd64
+  - go build -o bin\win\application\eltrade.exe main.go
+  - .\go-msi.exe make --msi %GH_APP%-%GOARCH%-%VERSION%.msi --version %VERSION% --arch %GOARCH%
+  - cp %GH_APP%-%GOARCH%-%VERSION%.msi %GH_APP%-%GOARCH%.msi
+
+deploy_script:
+
+  - never-fail gh-api-cli upload-release-asset -t %GH_TOKEN% -g "*-386.msi" -o %GH_USER% -r %GH_APP% --ver %VERSION%
+  - never-fail gh-api-cli upload-release-asset -t %GH_TOKEN% -g "*-amd64.msi" -o %GH_USER% -r %GH_APP% --ver %VERSION%
+
+artifacts:
+  - path: '*-386.msi'
+    name: msi-x86
+  - path: '*-amd64.msi'
+    name: msi-x64
+
+deploy:
+  - provider: GitHub
+    artifact: msi-x86, msi-x64
+    draft: false
+    prerelease: false
+    desription: "Release %APPVEYOR_REPO_TAG_NAME%"
+    auth_token:
+      secure: ngbsm9x1/3brsx+4LDkgEtic5icav3AGs/omGGjorQ07/WjURDjb6VbxahKU03QI
+    on:
+      appveyor_repo_tag: true   # deploy on tag push only

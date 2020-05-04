@@ -117,7 +117,6 @@ func Open() (*Device, error) {
 	}
 	dev.IsOpen = true
 	Logger.Debugf("fn:eltrade.Open -- Success ")
-	var a []int
 	return &dev, nil
 }
 

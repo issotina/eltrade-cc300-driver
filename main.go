@@ -55,11 +55,23 @@ func main() {
 	}
 
 	args := os.Args
+	fmt.Printf("fn:main -- args : %v", args)
 	if len(args) > 1 {
 		switch args[1] {
 		case "install":
-			s.Install()
-			s.Start()
+			if err := s.Install(); err != nil {
+				fmt.Printf("fn:main -- intallation failed due to: %s", err.Error())
+				return
+			}
+			if err := s.Start(); err != nil {
+				fmt.Printf("fn:main -- start failed due to: %s", err.Error())
+			}
+
+			return
+		case "start":
+			if err := s.Start(); err != nil {
+				fmt.Printf("fn:main -- start failed due to: %s", err.Error())
+			}
 			return
 		case "uninstall":
 			fmt.Printf("uninstall")
@@ -68,5 +80,8 @@ func main() {
 			return
 		}
 	}
-	s.Run()
+	if err := s.Run(); err != nil {
+		fmt.Printf("fn:main -- Run failed due to: %s", err.Error())
+	}
+
 }

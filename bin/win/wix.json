@@ -1,0 +1,36 @@
+{
+  "product": "MeCEF",
+  "company": "41DEVS",
+  "license": "LICENSE",
+  "upgrade-code": "3235b1ff-00b2-4511-ae88-eb888f0bc962",
+  "files": {
+    "guid": "5982fde6-b1ce-4454-b6db-e2b33561d208",
+    "items": [
+      "application\\eltrade.exe"
+    ]
+  },
+  "env": {
+    "guid": "",
+    "vars": []
+  },
+  "shortcuts": {},
+  "choco": {
+    "description": "Eltrade CC300 Driver",
+    "project-url": "https://github.com/geeckmc/eltrade-cc300-driver",
+    "license-url": "https://github.com/geeckmc/eltrade-cc300-driver/LICENSE"
+  },
+  "hooks": [
+    {
+      "command": "[INSTALLDIR]eltrade.exe install",
+      "when": "install"
+    },
+    {
+      "command": "[INSTALLDIR]eltrade.exe start",
+      "when": "install"
+    },
+    {
+      "command": "[INSTALLDIR]eltrade.exe uninstall",
+      "when": "uninstall"
+    }
+  ]
+}
