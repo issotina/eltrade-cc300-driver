@@ -1,11 +1,12 @@
 # Eltrade CC300 DRIVER API
 v0.1.3
 
-Ce Driver permet de communiquer en avec le module electronique de controle de facturation de la DGI 
+Ce Driver permet de communiquer en http avec le module electronique de controle de facturation de la DGI 
 
 ### SETUP
 
-Le Driver est un mini serveur http. Il reçoit les commandes par http et les éxécutent sur l'équipement connecté et fournis le resultat en response de la requête HTTP.
+Le Driver est un mini serveur http. Il reçoit les commandes par http et les éxécutent sur l'équipement connecté puis, fournis le resultat en response de la requête HTTP.
+
 Spécifications du serveur
 - Protocole : HTTP
 - Data Format : JSON
